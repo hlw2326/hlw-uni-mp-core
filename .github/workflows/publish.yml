@@ -1,0 +1,38 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - '*' #只在打 tag 时发布（推荐）
+
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: 安装 pnpm
+        run: npm install -g pnpm
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 构建项目（可选）
+        run: npm run build
+        continue-on-error: true
+
+      - name: 发布到 npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
