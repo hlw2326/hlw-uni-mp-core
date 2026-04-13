@@ -10,3 +10,4 @@ export { usePageMeta } from "./page-meta";
 export { useStorage, type StorageInstance } from "./storage";
 export { useValidate } from "./validate";
 export { useFormat } from "./format";
+export { useAd, type HlwAd, type AdError, type RewardedCloseResult } from "./ad";
