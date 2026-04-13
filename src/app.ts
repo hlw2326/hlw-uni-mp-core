@@ -2,7 +2,7 @@
  * useApp — 应用根上下文
  * 生命周期、Pinia、拦截器、hlw 注入全部收敛在此
  */
-import { createApp, type App } from 'vue';
+import { createSSRApp, type App, type Component } from 'vue';
 import { hlw } from '@/hlw';
 import { http } from '@/composables/http';
 import { useDevice } from '@/composables/device';
@@ -11,6 +11,8 @@ import md5 from 'md5';
 let _installed = false;
 
 export interface InterceptorOptions {
+    /** API 基础地址（库模式下 import.meta.env 不可用，需在此传入） */
+    baseURL?: string;
     /** 自动注入 Token 的 header 键名 */
     tokenHeader?: string;
     /** Token 来源函数（需平台自行提供） */
@@ -26,23 +28,46 @@ const _defaultOpts: InterceptorOptions = {
     autoToastError: true,
 };
 
+/**
+ * 创建 uni-app 应用入口。
+ * 返回的 `createApp` 函数符合 uni-app 要求的导出签名：
+ * ```ts
+ * export function createApp() { return { app }; }
+ * ```
+ */
 export function useApp() {
-    let _app: App | null = null;
+    /** 用于在导出前挂载插件 */
+    const _plugins: Array<(app: App) => void> = [];
 
-    function install(app: Parameters<typeof createApp>[0]) {
+    /**
+     * 注册一个插件（Pinia / Router 等），
+     * 会在 createApp 被 uni-app 框架调用时自动 use。
+     */
+    function use(pluginOrInstaller: any) {
+        _plugins.push((app) => app.use(pluginOrInstaller));
+    }
+
+    /**
+     * 生成 uni-app 要求的 createApp 入口函数。
+     * 必须在 main.ts 中以 `export { createApp }` 导出。
+     */
+    function install(AppComponent: Component) {
         if (_installed) {
             console.warn('[hlw] useApp().install() 应只调用一次');
         }
         _installed = true;
 
-        const mainApp = createApp(app);
-        mainApp.config.globalProperties['hlw'] = hlw;
-        _app = mainApp;
+        function createApp() {
+            const app = createSSRApp(AppComponent);
+            app.config.globalProperties['hlw'] = hlw;
+            _plugins.forEach((fn) => fn(app));
+            return { app };
+        }
 
-        return mainApp;
+        return createApp;
     }
 
-    return { install, hlw, http };
+    return { install, use, hlw, http };
 }
 
 /**
@@ -70,6 +95,7 @@ let _sigSecret = '';
 export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecret?: string } = {}) {
     const opts = { ..._defaultOpts, ...options };
     if (opts.sigSecret) _sigSecret = opts.sigSecret;
+    if (opts.baseURL) http.setBaseURL(opts.baseURL);
 
     // 请求拦截：自动注入 Token、拼接设备信息、添加 sig 签名
     http.onRequest((config) => {

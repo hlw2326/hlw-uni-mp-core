@@ -41,6 +41,11 @@ export class HttpClient {
     };
   }
 
+  /** 运行时设置 baseURL（适用于库模式下 import.meta.env 不可用的场景） */
+  setBaseURL(url: string): void {
+    this._baseURL = url;
+  }
+
   /** 添加请求拦截器，返回取消函数 */
   onRequest(fn: RequestInterceptor): () => void {
     this._reqInterceptors.push(fn);
@@ -197,7 +202,11 @@ export class HttpClient {
   }
 }
 
-/** 全局 HTTP 实例 */
-export const http = new HttpClient({
-  baseURL: (import.meta.env as Record<string, string>).VITE_API_BASE_URL ?? '',
-});
+/**
+ * 全局 HTTP 实例
+ *
+ * 注意：作为 npm 库发布时 import.meta.env 会在打包期被编译为空对象，
+ * 因此不在此处读取 env。消费者应通过 setupDefaultInterceptors({ baseURL })
+ * 或 http.setBaseURL() 在运行时注入。
+ */
+export const http = new HttpClient();

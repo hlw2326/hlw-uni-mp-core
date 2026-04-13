@@ -11,3 +11,11 @@ export { useStorage, type StorageInstance } from "./storage";
 export { useValidate } from "./validate";
 export { useFormat } from "./format";
 export { useAd, type HlwAd, type AdError, type RewardedCloseResult } from "./ad";
+export {
+    useShare,
+    type ShareConfig,
+    type ShareConfigResolver,
+    type ShareFrom,
+    type ShareAppMessageContent,
+    type ShareTimelineContent,
+} from "./share";
