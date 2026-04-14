@@ -1,5 +1,6 @@
 /**
  * useDevice — 设备信息 composable（单例缓存）
+ * 使用微信 3.7.0+ 推荐的新 API 替代废弃的 getSystemInfoSync
  */
 import { ref } from "vue";
 
@@ -65,72 +66,74 @@ export interface DeviceInfo {
 const _info = ref<DeviceInfo | null>(null);
 
 function collect(): DeviceInfo {
-    const sys = uni.getSystemInfoSync() as unknown as Record<string, unknown>;
+    // 优先使用微信 3.7.0+ 的新 API，避免 getSystemInfoSync 废弃告警及 3.15.2 兼容性问题
+    let deviceInfo: Record<string, unknown> = {};
+    let windowInfo: Record<string, unknown> = {};
+    let appBaseInfo: Record<string, unknown> = {};
+
+    try {
+        // @ts-ignore — uni.getDeviceInfo 在旧版 @dcloudio/types 中可能未声明
+        deviceInfo = (uni.getDeviceInfo?.() ?? {}) as Record<string, unknown>;
+    } catch {}
+
+    try {
+        // @ts-ignore
+        windowInfo = (uni.getWindowInfo?.() ?? {}) as Record<string, unknown>;
+    } catch {}
+
+    try {
+        appBaseInfo = (uni.getAppBaseInfo?.() ?? {}) as unknown as Record<string, unknown>;
+    } catch {}
+
+    // 兜底：若新 API 不可用则回退到 getSystemInfoSync
+    if (!deviceInfo.brand && !deviceInfo.model) {
+        try {
+            const sys = uni.getSystemInfoSync() as unknown as Record<string, unknown>;
+            deviceInfo = { ...sys };
+            windowInfo = { ...sys };
+            appBaseInfo = { ...sys };
+        } catch {}
+    }
 
     let appid = "";
     try {
         const accountInfo = uni.getAccountInfoSync() as { miniProgram?: { appId?: string } };
         appid = accountInfo?.miniProgram?.appId || "";
     } catch {
-        appid = (sys.appId as string) || "";
+        appid = (deviceInfo.appId as string) || "";
     }
 
-    let appName = "";
-    let appVersion = "";
-    let appVersionCode = "";
-    let hostName = "";
-    let hostVersion = "";
-    let hostLanguage = "";
-    let hostTheme = "";
-    try {
-        const appInfo = uni.getAppBaseInfo() as unknown as Record<string, unknown>;
-        appName = (appInfo.appName as string) || "";
-        appVersion = (appInfo.appVersion as string) || "";
-        appVersionCode = (appInfo.appVersionCode as string) || "";
-        hostName = (appInfo.hostName as string) || "";
-        hostVersion = (appInfo.hostVersion as string) || "";
-        hostLanguage = (appInfo.hostLanguage as string) || "";
-        hostTheme = (appInfo.hostTheme as string) || "";
-    } catch {
-        appVersion = (sys.appVersion as string) || "";
-    }
-
-    const deviceBrand = (sys.deviceBrand as string) || "";
-    const deviceModel = (sys.deviceModel as string) || "";
-    const deviceId = (sys.deviceId as string) || "";
-    const deviceType = (sys.deviceType as string) || "";
-    const deviceOrientation = (sys.deviceOrientation as "portrait" | "landscape") || "portrait";
-    const system = (sys.system as string) || "";
+    const system = (deviceInfo.system as string) || "";
 
     return {
         appid,
-        app_name: appName,
-        app_version: appVersion,
-        app_version_code: appVersionCode,
-        app_channel: (sys.appChannel as string) || "",
-        device_brand: deviceBrand,
-        device_model: deviceModel,
-        device_id: deviceId,
-        device_type: deviceType,
-        device_orientation: deviceOrientation,
-        brand: (sys.brand as string) || "",
-        model: (sys.model as string) || "",
+        app_name: (appBaseInfo.appName as string) || "",
+        app_version: (appBaseInfo.appVersion as string) || "",
+        app_version_code: (appBaseInfo.appVersionCode as string) || "",
+        app_channel: (appBaseInfo.appChannel as string) || "",
+        device_brand: (deviceInfo.brand as string) || "",
+        device_model: (deviceInfo.model as string) || "",
+        device_id: (deviceInfo.deviceId as string) || "",
+        device_type: (deviceInfo.deviceType as string) || "",
+        device_orientation: (windowInfo.deviceOrientation as "portrait" | "landscape") || "portrait",
+        brand: (deviceInfo.brand as string) || "",
+        model: (deviceInfo.model as string) || "",
         system,
         os: system.split(" ")[0] || "",
-        pixel_ratio: (sys.pixelRatio as number) || 0,
-        screen_width: (sys.screenWidth as number) || 0,
-        screen_height: (sys.screenHeight as number) || 0,
-        window_width: (sys.windowWidth as number) || 0,
-        window_height: (sys.windowHeight as number) || 0,
-        status_bar_height: (sys.statusBarHeight as number) || 0,
-        sdk_version: (sys.SDKVersion as string) || "",
-        host_name: hostName,
-        host_version: hostVersion,
-        host_language: hostLanguage,
-        host_theme: hostTheme,
-        platform: (sys.platform as string) || "",
-        language: (sys.language as string) || "",
-        version: (sys.version as string) || "",
+        pixel_ratio: (windowInfo.pixelRatio as number) || 0,
+        screen_width: (windowInfo.screenWidth as number) || 0,
+        screen_height: (windowInfo.screenHeight as number) || 0,
+        window_width: (windowInfo.windowWidth as number) || 0,
+        window_height: (windowInfo.windowHeight as number) || 0,
+        status_bar_height: (windowInfo.statusBarHeight as number) || 0,
+        sdk_version: (appBaseInfo.SDKVersion as string) || "",
+        host_name: (appBaseInfo.hostName as string) || "",
+        host_version: (appBaseInfo.hostVersion as string) || "",
+        host_language: (appBaseInfo.hostLanguage as string) || "",
+        host_theme: (appBaseInfo.hostTheme as string) || "",
+        platform: (deviceInfo.platform as string) || "",
+        language: (appBaseInfo.language as string) || "",
+        version: (appBaseInfo.version as string) || "",
     };
 }
 
