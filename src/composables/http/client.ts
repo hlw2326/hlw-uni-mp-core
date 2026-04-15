@@ -186,7 +186,7 @@ export class HttpClient {
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(res.data as ApiResponse<T>);
           } else {
-            const msg = (res.data as Record<string, unknown>)?.message ?? `请求失败: ${res.statusCode}`;
+            const msg = (res.data as Record<string, unknown>)?.info ?? `请求失败: ${res.statusCode}`;
             reject(new Error(msg));
           }
         },

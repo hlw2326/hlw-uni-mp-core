@@ -101,15 +101,20 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
     http.onRequest((config) => {
         const device = useDevice();
         if (device.value) {
-            const params = new URLSearchParams();
-            params.append('appid', device.value.appid);
-            params.append('device_brand', device.value.device_brand);
-            params.append('device_model', device.value.device_model);
-            params.append('device_id', device.value.device_id);
-            params.append('device_type', device.value.device_type);
-            params.append('platform', device.value.platform);
-            params.append('version', device.value.version);
-            config.url = config.url + (config.url.includes('?') ? '&' : '?') + params.toString();
+            const d = device.value;
+            const query = [
+                ['appid', d.appid],
+                ['device_brand', d.device_brand],
+                ['device_model', d.device_model],
+                ['device_id', d.device_id],
+                ['device_type', d.device_type],
+                ['platform', d.platform],
+                ['version', d.version],
+            ]
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+                .join('&');
+            config.url = config.url + (config.url.includes('?') ? '&' : '?') + query;
+            config.headers = { ...config.headers, 'X-Appid': d.appid };
         }
 
         // 添加 sig 签名
@@ -133,8 +138,8 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
 
     // 响应拦截：处理业务错误码
     http.onResponse((res) => {
-        if (opts.autoToastError && res.code !== 0) {
-            uni.showToast({ title: res.message || '请求失败', icon: 'none' });
+        if (opts.autoToastError && res.code !== 1) {
+            uni.showToast({ title: res.info || '请求失败', icon: 'none' });
         }
         return res;
     });

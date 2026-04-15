@@ -6,7 +6,7 @@
 export interface ApiResponse<T = unknown> {
     code: number;
     data: T;
-    message: string;
+    info: string;
 }
 
 /** 分页数据 */
