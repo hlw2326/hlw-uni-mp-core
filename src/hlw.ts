@@ -9,12 +9,18 @@ import { useMsg } from '@/composables/msg';
 import { useDevice } from '@/composables/device';
 import { http } from '@/composables/http';
 import { useAd } from '@/composables/ad';
+import { copyToClipboard } from '@/composables/utils';
 
 export interface HlwInstance {
   $msg: ReturnType<typeof useMsg>;
   $device: ReturnType<typeof useDevice>;
   $http: typeof http;
   $ad: ReturnType<typeof useAd>;
+  /**
+   * 一键复制 —— 配合 data-copy 属性使用，绑定到 @tap 事件即可
+   * @example <text data-copy="要复制的内容" @tap="hlw.copy">复制</text>
+   */
+  copy: (event: { currentTarget?: { dataset?: Record<string, any> } }) => void;
 }
 
 let _msg: ReturnType<typeof useMsg> | null = null;
@@ -26,4 +32,9 @@ export const hlw: HlwInstance = {
   get $device() { return (_device ??= useDevice()); },
   $http: http,
   get $ad() { return (_ad ??= useAd()); },
+  copy(event) {
+    const text = event?.currentTarget?.dataset?.copy;
+    if (text == null || text === '') return;
+    copyToClipboard(String(text));
+  },
 };

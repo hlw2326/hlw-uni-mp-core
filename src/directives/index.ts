@@ -1,0 +1,1 @@
+export { vCopy } from './copy'

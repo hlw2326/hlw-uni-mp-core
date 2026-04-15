@@ -12,8 +12,13 @@ export const copyToClipboard = (data: string, showToast = true): Promise<boolean
     return new Promise((resolve) => {
         uni.setClipboardData({
             data,
-            showToast,
-            success: () => resolve(true),
+            showToast: false,
+            success: () => {
+                if (showToast) {
+                    uni.showToast({ title: '复制成功', icon: 'success', duration: 1500 });
+                }
+                resolve(true);
+            },
             fail: () => resolve(false),
         });
     });
