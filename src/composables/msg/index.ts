@@ -23,7 +23,7 @@ export interface ModalOptions {
 }
 
 export interface HlwMsg {
-    toast(opts: ToastOptions): void;
+    toast(opts: ToastOptions | string): void;
     success(message: string): void;
     error(message: string): void;
     fail(message: string): void;
@@ -35,8 +35,9 @@ export interface HlwMsg {
 }
 
 export function useMsg(): HlwMsg {
-    function toast(opts: ToastOptions) {
-        const { message, icon = "none", image, duration = 2000, mask = false, position = "center" } = opts;
+    function toast(opts: ToastOptions | string) {
+        const normalized: ToastOptions = typeof opts === "string" ? { message: opts } : opts;
+        const { message, icon = "none", image, duration = 2000, mask = false, position = "center" } = normalized;
         uni.showToast({ title: message, icon, image, duration, mask, position });
     }
 

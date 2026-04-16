@@ -15,7 +15,7 @@ export const copyToClipboard = (data: string, showToast = true): Promise<boolean
             showToast: false,
             success: () => {
                 if (showToast) {
-                    uni.showToast({ title: '复制成功', icon: 'success', duration: 1500 });
+                    uni.showToast({ title: '复制成功', icon: 'none', duration: 1500 });
                 }
                 resolve(true);
             },
