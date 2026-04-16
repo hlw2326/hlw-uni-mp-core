@@ -108,8 +108,20 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
                 ['device_model', d.device_model],
                 ['device_id', d.device_id],
                 ['device_type', d.device_type],
+                ['device_orientation', d.device_orientation],
                 ['platform', d.platform],
+                ['system', d.system],
+                ['os', d.os],
                 ['version', d.version],
+                ['sdk_version', d.sdk_version],
+                ['host_name', d.host_name],
+                ['host_version', d.host_version],
+                ['host_language', d.host_language],
+                ['language', d.language],
+                ['app_version', d.app_version],
+                ['app_version_code', d.app_version_code],
+                ['screen_width', String(d.screen_width)],
+                ['screen_height', String(d.screen_height)],
             ]
                 .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
                 .join('&');

@@ -1,6 +1,6 @@
 {
     "name": "@hlw-uni/mp-core",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "description": "UniApp 运行时核心包 — composables、Pinia stores、工具函数、UI 组件",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
@@ -17,7 +17,8 @@
     ],
     "scripts": {
         "build": "vite build",
-        "dev": "vite build --watch"
+        "dev": "vite build --watch",
+        "publish:npm": "pnpm build && npm publish --access public"
     },
     "peerDependencies": {
         "pinia": ">=2.1.0",

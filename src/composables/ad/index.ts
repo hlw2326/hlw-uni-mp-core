@@ -33,42 +33,42 @@
 
 /** 广告错误对象 */
 export interface AdError {
-  errCode: number;
-  errMsg: string;
+    errCode: number;
+    errMsg: string;
 }
 
 /** 激励广告关闭回调参数 */
 export interface RewardedCloseResult {
-  /** true = 用户完整观看，可发放奖励 */
-  isEnded: boolean;
+    /** true = 用户完整观看，可发放奖励 */
+    isEnded: boolean;
 }
 
 /** useAd 返回的公共接口 */
 export interface HlwAd {
-  /**
-   * 展示插屏广告
-   * @param unitId 广告单元 ID
-   * @returns 是否成功触发展示
-   */
-  showInterstitial(unitId: string): Promise<boolean>;
+    /**
+     * 展示插屏广告
+     * @param unitId 广告单元 ID
+     * @returns 是否成功触发展示
+     */
+    showInterstitial(unitId: string): Promise<boolean>;
 
-  /**
-   * 展示激励视频广告
-   * @param unitId 广告单元 ID
-   * @returns 用户是否完整观看（true = 可发奖励）
-   */
-  showRewarded(unitId: string): Promise<boolean>;
+    /**
+     * 展示激励视频广告
+     * @param unitId 广告单元 ID
+     * @returns 用户是否完整观看（true = 可发奖励）
+     */
+    showRewarded(unitId: string): Promise<boolean>;
 
-  /**
-   * 预加载激励广告（建议在 onLoad 时调用，减少用户等待）
-   * @param unitId 广告单元 ID
-   */
-  preloadRewarded(unitId: string): void;
+    /**
+     * 预加载激励广告（建议在 onLoad 时调用，减少用户等待）
+     * @param unitId 广告单元 ID
+     */
+    preloadRewarded(unitId: string): void;
 
-  /**
-   * 销毁所有缓存的广告实例（建议在 onUnload 中调用）
-   */
-  destroy(): void;
+    /**
+     * 销毁所有缓存的广告实例（建议在 onUnload 中调用）
+     */
+    destroy(): void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -76,147 +76,155 @@ export interface HlwAd {
 /* -------------------------------------------------------------------------- */
 
 export function useAd(): HlwAd {
-  /** 插屏广告实例缓存 */
-  const interstitialCache = new Map<string, any>();
-  /** 激励广告实例缓存 */
-  const rewardedCache = new Map<string, any>();
-  /** 激励广告加载锁，避免并发重复 load */
-  const rewardedLoading = new Set<string>();
+    /** 插屏广告实例缓存 */
+    const interstitialCache = new Map<string, any>();
+    /** 激励广告实例缓存 */
+    const rewardedCache = new Map<string, any>();
+    /** 激励广告加载锁，避免并发重复 load */
+    const rewardedLoading = new Set<string>();
 
-  /* ---------------------------------------------------------------------- */
-  /*  插屏广告                                                               */
-  /* ---------------------------------------------------------------------- */
+    /* ---------------------------------------------------------------------- */
+    /*  插屏广告                                                               */
+    /* ---------------------------------------------------------------------- */
 
-  function getInterstitial(unitId: string): any {
-    if (!interstitialCache.has(unitId)) {
-      const ad = uni.createInterstitialAd({ adUnitId: unitId });
-      if (!ad) return null;
+    function getInterstitial(unitId: string): any {
+        if (!interstitialCache.has(unitId)) {
+            const ad = uni.createInterstitialAd({ adUnitId: unitId });
+            if (!ad) return null;
 
-      ad.onError?.((err: AdError) => {
-        console.error(`[useAd] 插屏广告错误 (${unitId}):`, err.errMsg, err.errCode);
-      });
+            ad.onError?.((err: AdError) => {
+                console.error(`[useAd] 插屏广告错误 (${unitId}):`, err.errMsg, err.errCode);
+            });
 
-      interstitialCache.set(unitId, ad);
+            interstitialCache.set(unitId, ad);
+        }
+        return interstitialCache.get(unitId) ?? null;
     }
-    return interstitialCache.get(unitId) ?? null;
-  }
 
-  function showInterstitial(unitId: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const ad = getInterstitial(unitId);
-      if (!ad) {
-        console.warn(`[useAd] 插屏广告创建失败，请检查 adUnitId: ${unitId}`);
-        resolve(false);
-        return;
-      }
+    function showInterstitial(unitId: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const ad = getInterstitial(unitId);
+            if (!ad) {
+                console.warn(`[useAd] 插屏广告创建失败，请检查 adUnitId: ${unitId}`);
+                resolve(false);
+                return;
+            }
 
-      ad.show()
-        .then(() => resolve(true))
-        .catch((err: any) => {
-          console.warn('[useAd] 插屏广告展示失败:', err);
-          resolve(false);
+            ad.show()
+                .then(() => resolve(true))
+                .catch((err: any) => {
+                    console.warn("[useAd] 插屏广告展示失败:", err);
+                    resolve(false);
+                });
         });
-    });
-  }
-
-  /* ---------------------------------------------------------------------- */
-  /*  激励视频广告                                                            */
-  /* ---------------------------------------------------------------------- */
-
-  function getRewarded(unitId: string): any {
-    if (!rewardedCache.has(unitId)) {
-      const ad = uni.createRewardedVideoAd({ adUnitId: unitId });
-      if (!ad) return null;
-      rewardedCache.set(unitId, ad);
     }
-    return rewardedCache.get(unitId) ?? null;
-  }
 
-  function preloadRewarded(unitId: string): void {
-    const ad = getRewarded(unitId);
-    if (!ad || rewardedLoading.has(unitId)) return;
+    /* ---------------------------------------------------------------------- */
+    /*  激励视频广告                                                            */
+    /* ---------------------------------------------------------------------- */
 
-    rewardedLoading.add(unitId);
-    ad.load()
-      .catch(() => {
-        /* 预加载失败静默处理，show 时会再次尝试 */
-      })
-      .finally(() => {
-        rewardedLoading.delete(unitId);
-      });
-  }
+    function getRewarded(unitId: string): any {
+        if (!rewardedCache.has(unitId)) {
+            const ad = uni.createRewardedVideoAd({ adUnitId: unitId });
+            if (!ad) return null;
+            rewardedCache.set(unitId, ad);
+        }
+        return rewardedCache.get(unitId) ?? null;
+    }
 
-  function showRewarded(unitId: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const ad = getRewarded(unitId);
-      if (!ad) {
-        console.warn(`[useAd] 激励广告创建失败，请检查 adUnitId: ${unitId}`);
-        resolve(false);
-        return;
-      }
+    function preloadRewarded(unitId: string): void {
+        const ad = getRewarded(unitId);
+        if (!ad || rewardedLoading.has(unitId)) return;
 
-      /* 持有回调引用，确保 offClose/offError 精准移除 */
-      let closeHandler: ((res: RewardedCloseResult) => void) | null = null;
-      let errorHandler: ((err: AdError) => void) | null = null;
-
-      function cleanup() {
-        if (closeHandler) { ad.offClose?.(closeHandler); closeHandler = null; }
-        if (errorHandler) { ad.offError?.(errorHandler); errorHandler = null; }
-      }
-
-      closeHandler = (res: RewardedCloseResult) => {
-        cleanup();
-        resolve(res?.isEnded ?? false);
-      };
-
-      errorHandler = (err: AdError) => {
-        console.error(`[useAd] 激励广告错误 (${unitId}):`, err.errMsg, err.errCode);
-        cleanup();
-        resolve(false);
-      };
-
-      ad.onClose(closeHandler);
-      ad.onError(errorHandler);
-
-      const doShow = () =>
-        ad.show().catch(() => {
-          cleanup();
-          resolve(false);
-        });
-
-      if (rewardedLoading.has(unitId)) {
-        /* 正在预加载中，等待本轮微任务后再 show */
-        Promise.resolve().then(doShow);
-      } else {
         rewardedLoading.add(unitId);
         ad.load()
-          .then(doShow)
-          .catch(doShow) /* load 失败仍尝试 show（可能有缓存） */
-          .finally(() => { rewardedLoading.delete(unitId); });
-      }
-    });
-  }
+            .catch(() => {
+                /* 预加载失败静默处理，show 时会再次尝试 */
+            })
+            .finally(() => {
+                rewardedLoading.delete(unitId);
+            });
+    }
 
-  /* ---------------------------------------------------------------------- */
-  /*  统一销毁                                                               */
-  /* ---------------------------------------------------------------------- */
+    function showRewarded(unitId: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const ad = getRewarded(unitId);
+            if (!ad) {
+                console.warn(`[useAd] 激励广告创建失败，请检查 adUnitId: ${unitId}`);
+                resolve(false);
+                return;
+            }
 
-  function destroy(): void {
-    interstitialCache.forEach((ad) => ad?.destroy?.());
-    interstitialCache.clear();
+            /* 持有回调引用，确保 offClose/offError 精准移除 */
+            let closeHandler: ((res: RewardedCloseResult) => void) | null = null;
+            let errorHandler: ((err: AdError) => void) | null = null;
 
-    rewardedCache.forEach((ad) => ad?.destroy?.());
-    rewardedCache.clear();
+            function cleanup() {
+                if (closeHandler) {
+                    ad.offClose?.(closeHandler);
+                    closeHandler = null;
+                }
+                if (errorHandler) {
+                    ad.offError?.(errorHandler);
+                    errorHandler = null;
+                }
+            }
 
-    rewardedLoading.clear();
-  }
+            closeHandler = (res: RewardedCloseResult) => {
+                cleanup();
+                resolve(res?.isEnded ?? false);
+            };
 
-  /* ---------------------------------------------------------------------- */
+            errorHandler = (err: AdError) => {
+                console.error(`[useAd] 激励广告错误 (${unitId}):`, err.errMsg, err.errCode);
+                cleanup();
+                resolve(false);
+            };
 
-  return {
-    showInterstitial,
-    showRewarded,
-    preloadRewarded,
-    destroy,
-  };
+            ad.onClose(closeHandler);
+            ad.onError(errorHandler);
+
+            const doShow = () =>
+                ad.show().catch(() => {
+                    cleanup();
+                    resolve(false);
+                });
+
+            if (rewardedLoading.has(unitId)) {
+                /* 正在预加载中，等待本轮微任务后再 show */
+                Promise.resolve().then(doShow);
+            } else {
+                rewardedLoading.add(unitId);
+                ad.load()
+                    .then(doShow)
+                    .catch(doShow) /* load 失败仍尝试 show（可能有缓存） */
+                    .finally(() => {
+                        rewardedLoading.delete(unitId);
+                    });
+            }
+        });
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*  统一销毁                                                               */
+    /* ---------------------------------------------------------------------- */
+
+    function destroy(): void {
+        interstitialCache.forEach((ad) => ad?.destroy?.());
+        interstitialCache.clear();
+
+        rewardedCache.forEach((ad) => ad?.destroy?.());
+        rewardedCache.clear();
+
+        rewardedLoading.clear();
+    }
+
+    /* ---------------------------------------------------------------------- */
+
+    return {
+        showInterstitial,
+        showRewarded,
+        preloadRewarded,
+        destroy,
+    };
 }
