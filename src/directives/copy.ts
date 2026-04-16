@@ -13,7 +13,14 @@
  * 在 uni-app 编译阶段即绑定，无需模板显式写 @tap。
  */
 import type { Directive, DirectiveBinding, VNode } from 'vue'
-import { copyToClipboard } from '@/composables/utils'
+
+function copyText(data: string) {
+    uni.setClipboardData({
+        data,
+        showToast: false,
+        success: () => uni.showToast({ title: '复制成功', icon: 'none', duration: 1500 }),
+    })
+}
 
 function injectTap(vnode: VNode, binding: DirectiveBinding) {
     if (!vnode.props) (vnode as any).props = {}
@@ -24,7 +31,7 @@ function injectTap(vnode: VNode, binding: DirectiveBinding) {
         prev?.(e)
         const value = binding.value
         if (value == null || value === '') return
-        copyToClipboard(String(value))
+        copyText(String(value))
     }
 }
 

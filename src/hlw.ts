@@ -1,40 +1,33 @@
 /**
  * hlw — 全局命名空间工厂
- * 提供 $msg、$device、$http 统一访问入口
+ * 提供 $msg、$device、$http、$utils 统一访问入口
  *
  * 注意：$msg、$device、$ad 使用懒加载 getter，避免在模块顶层执行
  * uni.getSystemInfoSync() 等同步 API，防止小程序启动超时。
  */
 import { useMsg } from '@/composables/msg';
-import { useDevice } from '@/composables/device';
+import { useDevice, type DeviceInfo } from '@/composables/device';
 import { http } from '@/composables/http';
 import { useAd } from '@/composables/ad';
-import { copyToClipboard } from '@/composables/utils';
+import { useUtils } from '@/composables/utils';
 
 export interface HlwInstance {
   $msg: ReturnType<typeof useMsg>;
-  $device: ReturnType<typeof useDevice>;
+  $device: DeviceInfo;
   $http: typeof http;
   $ad: ReturnType<typeof useAd>;
-  /**
-   * 一键复制 —— 配合 data-copy 属性使用，绑定到 @tap 事件即可
-   * @example <text data-copy="要复制的内容" @tap="hlw.copy">复制</text>
-   */
-  copy: (event: { currentTarget?: { dataset?: Record<string, any> } }) => void;
+  $utils: ReturnType<typeof useUtils>;
 }
 
 let _msg: ReturnType<typeof useMsg> | null = null;
 let _device: ReturnType<typeof useDevice> | null = null;
 let _ad: ReturnType<typeof useAd> | null = null;
+let _utils: ReturnType<typeof useUtils> | null = null;
 
 export const hlw: HlwInstance = {
   get $msg() { return (_msg ??= useMsg()); },
-  get $device() { return (_device ??= useDevice()); },
+  get $device() { return (_device ??= useDevice()).value!; },
   $http: http,
   get $ad() { return (_ad ??= useAd()); },
-  copy(event) {
-    const text = event?.currentTarget?.dataset?.copy;
-    if (text == null || text === '') return;
-    copyToClipboard(String(text));
-  },
+  get $utils() { return (_utils ??= useUtils()); },
 };
