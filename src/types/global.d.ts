@@ -14,19 +14,18 @@ declare const __uniConfig: {
   tabBar: Record<string, unknown>;
 };
 
-// === Import types from composables ===
-import type { HlwMsg, ToastOptions, ModalOptions, ToastIcon } from '@/composables/msg';
+import type { HlwMsg } from '@/composables/msg';
 import type { DeviceInfo } from '@/composables/device';
 import type { HlwInstance } from '@/hlw';
 
-// === Global Augmentation ===
-declare global {
-  interface Vue {
-    /** 统一全局命名空间 */
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
     hlw: HlwInstance;
-    /** 兼容旧写法 */
     $msg: HlwMsg;
   }
+}
+
+declare global {
   interface Uni {
     hlw: HlwInstance;
     $msg: HlwMsg;

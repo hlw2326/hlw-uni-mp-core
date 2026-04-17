@@ -32,9 +32,11 @@ export class HttpClient {
   private _errInterceptors: ErrorInterceptor[] = [];
   private _baseURL: string;
   private _defaultHeaders: Record<string, string>;
+  private _noCache: boolean;
 
-  constructor(options: { baseURL?: string; headers?: Record<string, string> } = {}) {
+  constructor(options: { baseURL?: string; headers?: Record<string, string>; noCache?: boolean } = {}) {
     this._baseURL = options.baseURL ?? '';
+    this._noCache = options.noCache ?? true;
     this._defaultHeaders = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -171,8 +173,10 @@ export class HttpClient {
 
   private _buildUrl(url: string): string {
     if (/^https?:\/\//.test(url)) return url;
-    const sep = url.includes('?') ? '&' : '?';
-    return `${this._baseURL}${url}${sep}_t=${Date.now()}`;
+    const full = `${this._baseURL}${url}`;
+    if (!this._noCache) return full;
+    const sep = full.includes('?') ? '&' : '?';
+    return `${full}${sep}_t=${Date.now()}`;
   }
 
   private async _doRequest<T>(url: string, cfg: RequestConfig): Promise<ApiResponse<T>> {

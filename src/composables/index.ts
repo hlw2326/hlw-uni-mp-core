@@ -19,4 +19,5 @@ export {
     type ShareAppMessageContent,
     type ShareTimelineContent,
 } from "./share";
-export { useUtils, type DownloadFileOptions, type DownloadFileResult } from "./utils";
+export { useUtils, type DownloadFileOptions, type DownloadFileResult, type TapEvent } from "./utils";
+export { useColor } from "./color";

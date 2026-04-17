@@ -24,7 +24,7 @@ export interface DownloadFileResult {
     errMsg?: string;
 }
 
-type TapEvent = { currentTarget?: { dataset?: Record<string, any> } };
+export type TapEvent = { currentTarget?: { dataset?: Record<string, any> } };
 
 export function useUtils() {
     /** 复制文本到剪贴板 */

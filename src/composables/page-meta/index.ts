@@ -16,7 +16,18 @@ export function usePageMeta() {
     }
 
     function setOptions(options: PageMeta) {
-        if (options.title) setTitle(options.title);
+        if (options.title || options.navigationBarTitleText) {
+            setTitle(options.title || options.navigationBarTitleText!);
+        }
+        if (options.navigationBarBackgroundColor || options.navigationBarTextStyle) {
+            uni.setNavigationBarColor({
+                frontColor: options.navigationBarTextStyle === "white" ? "#ffffff" : "#000000",
+                backgroundColor: options.navigationBarBackgroundColor ?? "#ffffff",
+            });
+        }
+        if (options.backgroundColor) {
+            uni.setBackgroundColor({ backgroundColor: options.backgroundColor });
+        }
         if (options.enablePullDownRefresh !== undefined) {
             uni.setBackgroundTextStyle({ textStyle: "dark" });
         }

@@ -59,12 +59,16 @@
  *      const { refs, setRefs } = useRefs()
  *      const input = refs.value['username'] as { focus: () => void } | undefined
  */
-import { ref, onBeforeUpdate } from "vue";
+import { ref, onBeforeUpdate, onUnmounted } from "vue";
 
 export function useRefs() {
     const refs = ref<Record<string, any>>({});
 
     onBeforeUpdate(() => {
+        refs.value = {};
+    });
+
+    onUnmounted(() => {
         refs.value = {};
     });
 

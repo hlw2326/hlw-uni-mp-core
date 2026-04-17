@@ -1,6 +1,6 @@
 {
     "name": "@hlw-uni/mp-core",
-    "version": "1.0.27",
+    "version": "1.0.29",
     "description": "UniApp 运行时核心包 — composables、Pinia stores、工具函数、UI 组件",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
@@ -25,11 +25,11 @@
         "vue": ">=3.4.0"
     },
     "devDependencies": {
-        "@dcloudio/types": "^3.4.8",
+        "@dcloudio/types": "^3.4.30",
         "@types/md5": "^2.3.6",
-        "@types/node": "^20.11.0",
-        "pinia": "^2.1.7",
-        "typescript": "^4.9.4",
+        "@types/node": "^20.19.39",
+        "pinia": "^2.3.1",
+        "typescript": "^4.9.5",
         "vite": "5.2.8",
         "vite-plugin-dts": "^4.5.4"
     },

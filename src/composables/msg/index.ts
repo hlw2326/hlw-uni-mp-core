@@ -49,10 +49,6 @@ export function useMsg(): HlwMsg {
         uni.showToast({ title: message, icon: "fail", duration: 2000 });
     }
 
-    function fail(message: string) {
-        uni.showToast({ title: message, icon: "fail", duration: 2000 });
-    }
-
     function showLoading(message = "加载中...") {
         uni.showLoading({ title: message, mask: true });
     }
@@ -92,7 +88,7 @@ export function useMsg(): HlwMsg {
         toast,
         success,
         error,
-        fail,
+        fail: error,
         showLoading,
         hideLoading,
         confirm,

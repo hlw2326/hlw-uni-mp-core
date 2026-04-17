@@ -65,34 +65,22 @@ export interface DeviceInfo {
 
 const _info = ref<DeviceInfo | null>(null);
 
+function tryCall(fn: (() => unknown) | undefined): Record<string, unknown> {
+    try { return (fn?.() ?? {}) as Record<string, unknown>; } catch { return {}; }
+}
+
 function collect(): DeviceInfo {
-    // 优先使用微信 3.7.0+ 的新 API，避免 getSystemInfoSync 废弃告警及 3.15.2 兼容性问题
-    let deviceInfo: Record<string, unknown> = {};
-    let windowInfo: Record<string, unknown> = {};
-    let appBaseInfo: Record<string, unknown> = {};
+    // @ts-ignore — 新 API 在旧版 @dcloudio/types 中可能未声明
+    let deviceInfo = tryCall(uni.getDeviceInfo);
+    // @ts-ignore
+    let windowInfo = tryCall(uni.getWindowInfo);
+    let appBaseInfo = tryCall(uni.getAppBaseInfo);
 
-    try {
-        // @ts-ignore — uni.getDeviceInfo 在旧版 @dcloudio/types 中可能未声明
-        deviceInfo = (uni.getDeviceInfo?.() ?? {}) as Record<string, unknown>;
-    } catch {}
-
-    try {
-        // @ts-ignore
-        windowInfo = (uni.getWindowInfo?.() ?? {}) as Record<string, unknown>;
-    } catch {}
-
-    try {
-        appBaseInfo = (uni.getAppBaseInfo?.() ?? {}) as unknown as Record<string, unknown>;
-    } catch {}
-
-    // 兜底：若新 API 不可用则回退到 getSystemInfoSync
     if (!deviceInfo.brand && !deviceInfo.model) {
-        try {
-            const sys = uni.getSystemInfoSync() as unknown as Record<string, unknown>;
-            deviceInfo = { ...sys };
-            windowInfo = { ...sys };
-            appBaseInfo = { ...sys };
-        } catch {}
+        const sys = tryCall(() => uni.getSystemInfoSync());
+        deviceInfo = { ...sys };
+        windowInfo = { ...sys };
+        appBaseInfo = { ...sys };
     }
 
     let appid = "";
