@@ -10,6 +10,7 @@ import md5 from 'md5';
 import type { ApiResponse, RequestConfig } from '@/composables/http/types';
 
 let _installed = false;
+let _interceptorCleanup: Array<() => void> = [];
 
 export interface InterceptorOptions {
     /** API 基础地址 */
@@ -94,10 +95,13 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
     if (opts.sigSecret) _sigSecret = opts.sigSecret;
     if (opts.baseURL) http.setBaseURL(opts.baseURL);
 
+    _interceptorCleanup.forEach((dispose) => dispose());
+    _interceptorCleanup = [];
+
     /**
      * 请求拦截：注入设备信息、签名和 token。
      */
-    http.onRequest((config: RequestConfig) => {
+    const offRequest = http.onRequest((config: RequestConfig) => {
         const device = useDevice();
         if (device.value) {
             const d = device.value;
@@ -149,7 +153,7 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
     /**
      * 响应拦截：处理业务错误提示。
      */
-    http.onResponse((res: ApiResponse<unknown>) => {
+    const offResponse = http.onResponse((res: ApiResponse<unknown>) => {
         if (opts.autoToastError && res.code !== 1) {
             uni.showToast({ title: res.info || '请求失败', icon: 'none' });
         }
@@ -159,9 +163,11 @@ export function setupDefaultInterceptors(options: InterceptorOptions & { sigSecr
     /**
      * 错误拦截：处理未授权场景。
      */
-    http.onError((err: Error) => {
+    const offError = http.onError((err: Error) => {
         if (err.message.includes('401')) {
             opts.onUnauthorized?.();
         }
     });
+
+    _interceptorCleanup = [offRequest, offResponse, offError];
 }

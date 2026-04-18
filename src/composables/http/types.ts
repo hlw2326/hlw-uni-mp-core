@@ -28,7 +28,7 @@ export interface RequestConfig {
 
 /** 拦截器类型 */
 export type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
-export type ResponseInterceptor<T = unknown> = (res: ApiResponse<T>) => ApiResponse<T> | Promise<ApiResponse<T>>;
+export type ResponseInterceptor<T = unknown> = (res: ApiResponse<T>) => ApiResponse<T> | void | Promise<ApiResponse<T> | void>;
 export type ErrorInterceptor = (err: Error) => void | Error | Promise<void | Error>;
 
 /** 上传配置 */
@@ -37,9 +37,9 @@ export interface UploadConfig {
     server: string;
     /** 文件路径 */
     filePath: string;
-    /** 文件名（可选，默认取 filePath） */
+    /** 文件名，可选，默认取 filePath */
     fileName?: string;
-    /** 上传类型：cos | oss | qiniu | alist */
+    /** 上传类型，支持 cos | oss | qiniu | alist | local */
     type: string;
     /** 云存储密钥凭证 */
     credentials?: Record<string, string>;

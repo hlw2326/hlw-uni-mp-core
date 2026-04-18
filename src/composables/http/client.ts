@@ -92,14 +92,20 @@ export class HttpClient {
       cfg = await fn(cfg);
     }
 
-    const fullUrl = this._buildUrl(cfg.url);
-    const res = await this._doRequest<T>(fullUrl, cfg);
+    try {
+      const fullUrl = this._buildUrl(cfg.url);
+      const res = await this._doRequest<T>(fullUrl, cfg);
 
-    for (const fn of this._resInterceptors) {
-      const modified = await fn(res as ApiResponse<unknown>);
-      if (modified !== undefined) return modified as ApiResponse<T>;
+      for (const fn of this._resInterceptors) {
+        const modified = await fn(res as ApiResponse<unknown>);
+        if (modified !== undefined) return modified as ApiResponse<T>;
+      }
+      return res;
+    } catch (e) {
+      const err = e as Error;
+      await this._applyErrorInterceptors(err);
+      throw err;
     }
-    return res;
   }
 
   /**
@@ -122,7 +128,6 @@ export class HttpClient {
         return res;
       } catch (e) {
         error.value = e as Error;
-        await this._applyErrorInterceptors(e as Error);
         throw e;
       } finally {
         loading.value = false;
@@ -145,17 +150,18 @@ export class HttpClient {
    * 根据上传类型选择适配器并执行文件上传。
    */
   upload(config: UploadConfig): Promise<UploadResult> {
-    const adapter = getAdapter(config.type);
     const fileName = config.fileName ?? config.filePath.split('/').pop() ?? 'file';
 
     let server = config.server;
     if (config.type === 'local' && config.url) server = config.url;
 
-    const formData = adapter.buildFormData({
-      filePath: config.filePath,
-      fileName,
-      credentials: config.credentials,
-    });
+    const formData = config.type === 'local'
+      ? (config.credentials ?? {})
+      : getAdapter(config.type).buildFormData({
+          filePath: config.filePath,
+          fileName,
+          credentials: config.credentials,
+        });
 
     return new Promise((resolve, reject) => {
       uni.uploadFile({
