@@ -1,5 +1,5 @@
 /**
- * usePageMeta — 页面元信息 composable
+ * usePageMeta - 页面元信息 composable
  */
 export interface PageMeta {
     title?: string;
@@ -10,11 +10,20 @@ export interface PageMeta {
     enablePullDownRefresh?: boolean;
 }
 
+/**
+ * 页面导航栏与背景元信息工具。
+ */
 export function usePageMeta() {
+    /**
+     * 设置当前页面标题。
+     */
     function setTitle(title: string) {
         uni.setNavigationBarTitle({ title });
     }
 
+    /**
+     * 批量设置页面标题、导航栏和背景样式。
+     */
     function setOptions(options: PageMeta) {
         if (options.title || options.navigationBarTitleText) {
             setTitle(options.title || options.navigationBarTitleText!);

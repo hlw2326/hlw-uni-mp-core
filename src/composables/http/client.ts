@@ -1,6 +1,6 @@
 /**
- * HttpClient — Axios 风格的 HTTP 客户端
- * 支持请求/响应拦截器、组件内请求 composable、上传策略模式
+ * HttpClient - Axios 风格的 HTTP 客户端
+ * 支持请求/响应拦截器、组件内请求 composable、上传策略模式。
  */
 import { ref } from 'vue';
 import type {
@@ -14,7 +14,7 @@ import type {
 } from './types';
 import { getAdapter } from './adapters';
 
-/** 组件内请求返回的状态 */
+/** 组件内请求返回的状态对象。 */
 export interface UseRequestReturn<T = unknown> {
   loading: ReturnType<typeof ref<boolean>>;
   data: ReturnType<typeof ref<T | null>>;
@@ -34,6 +34,9 @@ export class HttpClient {
   private _defaultHeaders: Record<string, string>;
   private _noCache: boolean;
 
+  /**
+   * 创建 HttpClient 实例并初始化默认配置。
+   */
   constructor(options: { baseURL?: string; headers?: Record<string, string>; noCache?: boolean } = {}) {
     this._baseURL = options.baseURL ?? '';
     this._noCache = options.noCache ?? true;
@@ -43,12 +46,12 @@ export class HttpClient {
     };
   }
 
-  /** 运行时设置 baseURL（适用于库模式下 import.meta.env 不可用的场景） */
+  /** 运行时设置 baseURL。 */
   setBaseURL(url: string): void {
     this._baseURL = url;
   }
 
-  /** 添加请求拦截器，返回取消函数 */
+  /** 注册请求拦截器，并返回注销函数。 */
   onRequest(fn: RequestInterceptor): () => void {
     this._reqInterceptors.push(fn);
     return () => {
@@ -57,7 +60,7 @@ export class HttpClient {
     };
   }
 
-  /** 添加响应拦截器 */
+  /** 注册响应拦截器，并返回注销函数。 */
   onResponse<T = unknown>(fn: ResponseInterceptor<T>): () => void {
     this._resInterceptors.push(fn as ResponseInterceptor);
     return () => {
@@ -66,7 +69,7 @@ export class HttpClient {
     };
   }
 
-  /** 添加错误拦截器 */
+  /** 注册错误拦截器，并返回注销函数。 */
   onError(fn: ErrorInterceptor): () => void {
     this._errInterceptors.push(fn);
     return () => {
@@ -76,7 +79,7 @@ export class HttpClient {
   }
 
   /**
-   * 全局请求
+   * 执行一次全局请求，自动串联请求与响应拦截器。
    */
   async request<T = unknown>(config: RequestConfig): Promise<ApiResponse<T>> {
     let cfg: RequestConfig = {
@@ -93,21 +96,24 @@ export class HttpClient {
     const res = await this._doRequest<T>(fullUrl, cfg);
 
     for (const fn of this._resInterceptors) {
-      const modified = await fn<T>(res);
-      if (modified !== undefined) return modified;
+      const modified = await fn(res as ApiResponse<unknown>);
+      if (modified !== undefined) return modified as ApiResponse<T>;
     }
     return res;
   }
 
   /**
-   * 组件内请求，返回带状态的 composable
+   * 创建组件内可复用的请求状态对象。
    */
   useRequest<T = unknown>(): UseRequestReturn<T> {
     const loading = ref(false);
     const data = ref<T | null>(null);
     const error = ref<Error | null>(null);
 
-    async function run(cfg: RequestConfig): Promise<ApiResponse<T>> {
+    /**
+     * 执行一次请求并维护 loading、data、error 状态。
+     */
+    const run = async (cfg: RequestConfig): Promise<ApiResponse<T>> => {
       loading.value = true;
       error.value = null;
       try {
@@ -121,18 +127,22 @@ export class HttpClient {
       } finally {
         loading.value = false;
       }
-    }
+    };
 
+    /** 发起 GET 请求。 */
     const get = (url: string, d?: unknown) => run({ url, method: 'GET', data: d });
+    /** 发起 POST 请求。 */
     const post = (url: string, d?: unknown) => run({ url, method: 'POST', data: d });
+    /** 发起 PUT 请求。 */
     const put = (url: string, d?: unknown) => run({ url, method: 'PUT', data: d });
+    /** 发起 DELETE 请求。 */
     const del = (url: string, d?: unknown) => run({ url, method: 'DELETE', data: d });
 
-    return { loading, data, error, run: run.bind(this), get, post, put, del };
+    return { loading, data, error, run, get, post, put, del };
   }
 
   /**
-   * 上传文件（策略模式）
+   * 根据上传类型选择适配器并执行文件上传。
    */
   upload(config: UploadConfig): Promise<UploadResult> {
     const adapter = getAdapter(config.type);
@@ -171,6 +181,9 @@ export class HttpClient {
     });
   }
 
+  /**
+   * 拼接 baseURL，并在开启防缓存时追加时间戳参数。
+   */
   private _buildUrl(url: string): string {
     if (/^https?:\/\//.test(url)) return url;
     const full = `${this._baseURL}${url}`;
@@ -179,6 +192,9 @@ export class HttpClient {
     return `${full}${sep}_t=${Date.now()}`;
   }
 
+  /**
+   * 调用 uni.request 发起底层网络请求。
+   */
   private async _doRequest<T>(url: string, cfg: RequestConfig): Promise<ApiResponse<T>> {
     return new Promise((resolve, reject) => {
       uni.request({
@@ -191,7 +207,7 @@ export class HttpClient {
             resolve(res.data as ApiResponse<T>);
           } else {
             const msg = (res.data as Record<string, unknown>)?.info ?? `请求失败: ${res.statusCode}`;
-            reject(new Error(msg));
+            reject(new Error(String(msg)));
           }
         },
         fail: (err) => reject(new Error(err.errMsg || '网络请求失败')),
@@ -199,6 +215,9 @@ export class HttpClient {
     });
   }
 
+  /**
+   * 顺序执行已注册的错误拦截器。
+   */
   private async _applyErrorInterceptors(err: Error): Promise<void> {
     for (const fn of this._errInterceptors) {
       await fn(err);
@@ -207,10 +226,6 @@ export class HttpClient {
 }
 
 /**
- * 全局 HTTP 实例
- *
- * 注意：作为 npm 库发布时 import.meta.env 会在打包期被编译为空对象，
- * 因此不在此处读取 env。消费者应通过 setupDefaultInterceptors({ baseURL })
- * 或 http.setBaseURL() 在运行时注入。
+ * 全局 HTTP 实例。
  */
 export const http = new HttpClient();

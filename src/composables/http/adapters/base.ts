@@ -1,8 +1,8 @@
 /**
- * 云存储上传适配器 — 上传上下文
+ * 云存储上传适配器 - 上传上下文
  */
 
-/** 上传上下文 */
+/** 上传上下文。 */
 export interface UploadContext {
     filePath: string;
     fileName: string;
@@ -12,7 +12,7 @@ export interface UploadContext {
     extraData?: Record<string, string>;
 }
 
-/** 云存储适配器接口 */
+/** 云存储适配器接口。 */
 export interface UploadAdapter {
     /** 适配器名称 */
     name: string;

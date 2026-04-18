@@ -1,5 +1,5 @@
 /**
- * useStorage — 本地存储 composable
+ * useStorage - 本地存储 composable
  */
 export interface StorageInstance {
     get: <T = unknown>(key: string) => T | null;
@@ -9,7 +9,13 @@ export interface StorageInstance {
     info: () => UniApp.GetStorageInfoSuccess | null;
 }
 
+/**
+ * 本地存储读写工具。
+ */
 export function useStorage(): StorageInstance {
+    /**
+     * 读取指定 key 的缓存值。
+     */
     function get<T = unknown>(key: string): T | null {
         try {
             const value = uni.getStorageSync(key);
@@ -19,6 +25,9 @@ export function useStorage(): StorageInstance {
         }
     }
 
+    /**
+     * 写入指定 key 的缓存值。
+     */
     function set<T>(key: string, value: T): boolean {
         try {
             uni.setStorageSync(key, value);
@@ -28,6 +37,9 @@ export function useStorage(): StorageInstance {
         }
     }
 
+    /**
+     * 删除指定 key 的缓存值。
+     */
     function remove(key: string): boolean {
         try {
             uni.removeStorageSync(key);
@@ -37,6 +49,9 @@ export function useStorage(): StorageInstance {
         }
     }
 
+    /**
+     * 清空全部本地缓存。
+     */
     function clear(): boolean {
         try {
             uni.clearStorageSync();
@@ -46,7 +61,10 @@ export function useStorage(): StorageInstance {
         }
     }
 
-    function info(): UniApp.GetStorageInfoSyncResult | null {
+    /**
+     * 获取当前缓存使用信息。
+     */
+    function info(): UniApp.GetStorageInfoSuccess | null {
         try {
             return uni.getStorageInfoSync();
         } catch {

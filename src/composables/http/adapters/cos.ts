@@ -1,10 +1,13 @@
 /**
- * 腾讯云 COS 适配器
+ * 腾讯云 COS 上传适配器。
  */
 import type { UploadAdapter } from "./base";
 
 export const cosAdapter: UploadAdapter = {
     name: "cos",
+    /**
+     * 生成 COS 直传所需的表单字段。
+     */
     buildFormData(ctx) {
         const c = ctx.credentials ?? {};
         return {

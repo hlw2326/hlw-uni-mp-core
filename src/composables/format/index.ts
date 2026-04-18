@@ -2,6 +2,9 @@
  * useFormat — 格式化工具 composable
  */
 export function useFormat() {
+    /**
+     * 按指定模板格式化日期时间。
+     */
     function date(date: Date | number | string, format = "YYYY-MM-DD HH:mm:ss"): string {
         const d = new Date(date);
         if (isNaN(d.getTime())) return "";
@@ -16,6 +19,9 @@ export function useFormat() {
         return format.replace("YYYY", String(year)).replace("MM", month).replace("DD", day).replace("HH", hours).replace("mm", minutes).replace("ss", seconds);
     }
 
+    /**
+     * 将字节数格式化为更易读的文件大小。
+     */
     function fileSize(bytes: number): string {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -24,10 +30,16 @@ export function useFormat() {
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
     }
 
+    /**
+     * 对手机号中间四位进行脱敏。
+     */
     function phone(value: string): string {
         return value.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2");
     }
 
+    /**
+     * 按指定精度与千分位格式输出金额。
+     */
     function money(amount: number, decimals = 2, decPoint = ".", thousandsSep = ","): string {
         return amount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep);
     }

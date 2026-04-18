@@ -1,15 +1,15 @@
 /**
- * 小程序工具类
+ * 小程序通用工具。
  */
 
 export interface DownloadFileOptions {
     /** 下载地址 */
     url: string;
-    /** 文件保存路径（可选） */
+    /** 文件保存路径，可选 */
     filePath?: string;
-    /** HTTP 请求头（可选） */
+    /** HTTP 请求头，可选 */
     header?: Record<string, string>;
-    /** 下载进度回调（可选） */
+    /** 下载进度回调，可选 */
     onProgress?: (progress: number, totalBytesWritten: number, totalBytesExpectedToWrite: number) => void;
 }
 
@@ -26,8 +26,13 @@ export interface DownloadFileResult {
 
 export type TapEvent = { currentTarget?: { dataset?: Record<string, any> } };
 
+/**
+ * 剪贴板、下载与相册保存工具集合。
+ */
 export function useUtils() {
-    /** 复制文本到剪贴板 */
+    /**
+     * 复制文本到剪贴板，可选显示成功提示。
+     */
     function copy(data: string, showToast = true): Promise<boolean> {
         return new Promise((resolve) => {
             uni.setClipboardData({
@@ -44,7 +49,9 @@ export function useUtils() {
         });
     }
 
-    /** 从 data-copy 属性读取内容并复制（配合模板 @tap 使用） */
+    /**
+     * 从事件 dataset 的 data-copy 字段读取文本并复制。
+     */
     function copyFromEvent(event: TapEvent) {
         const dataset = event?.currentTarget?.dataset;
         const text = dataset?.copy;
@@ -53,7 +60,9 @@ export function useUtils() {
         copy(String(text), showToast);
     }
 
-    /** 获取剪贴板内容 */
+    /**
+     * 读取当前剪贴板文本内容。
+     */
     function paste(): Promise<string> {
         return new Promise((resolve) => {
             uni.getClipboardData({
@@ -63,7 +72,9 @@ export function useUtils() {
         });
     }
 
-    /** 保存图片到相册 */
+    /**
+     * 将本地图片保存到系统相册。
+     */
     function saveImage(filePath: string): Promise<boolean> {
         return new Promise((resolve) => {
             uni.saveImageToPhotosAlbum({
@@ -91,7 +102,9 @@ export function useUtils() {
         });
     }
 
-    /** 下载文件 */
+    /**
+     * 下载文件并返回下载结果。
+     */
     function downloadFile(options: DownloadFileOptions): Promise<DownloadFileResult> {
         return new Promise((resolve) => {
             const task = uni.downloadFile({
@@ -116,7 +129,9 @@ export function useUtils() {
         });
     }
 
-    /** 下载图片并保存到相册 */
+    /**
+     * 下载远程图片并直接保存到相册。
+     */
     async function downloadAndSaveImage(url: string, onProgress?: (progress: number) => void): Promise<boolean> {
         try {
             uni.showLoading({ title: "下载中...", mask: true });

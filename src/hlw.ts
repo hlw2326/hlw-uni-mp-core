@@ -1,9 +1,6 @@
 /**
- * hlw — 全局命名空间工厂
- * 提供 $msg、$device、$http、$utils 统一访问入口
- *
- * 注意：$msg、$device、$ad 使用懒加载 getter，避免在模块顶层执行
- * uni.getSystemInfoSync() 等同步 API，防止小程序启动超时。
+ * hlw - 全局命名空间工厂
+ * 提供 $msg、$device、$http、$ad、$utils、$color 的统一访问入口。
  */
 import { useMsg } from '@/composables/msg';
 import { useDevice, type DeviceInfo } from '@/composables/device';
@@ -28,10 +25,16 @@ let _utils: ReturnType<typeof useUtils> | null = null;
 let _color: ReturnType<typeof useColor> | null = null;
 
 export const hlw: HlwInstance = {
+  /** 延迟创建消息提示实例。 */
   get $msg() { return (_msg ??= useMsg()); },
+  /** 延迟读取并缓存设备信息。 */
   get $device() { return (_device ??= useDevice()).value!; },
+  /** 复用全局 HTTP 实例。 */
   $http: http,
+  /** 延迟创建广告能力实例。 */
   get $ad() { return (_ad ??= useAd()); },
+  /** 延迟创建通用工具实例。 */
   get $utils() { return (_utils ??= useUtils()); },
+  /** 延迟创建颜色工具实例。 */
   get $color() { return (_color ??= useColor()); },
 };

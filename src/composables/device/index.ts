@@ -65,10 +65,16 @@ export interface DeviceInfo {
 
 const _info = ref<DeviceInfo | null>(null);
 
+/**
+ * 安全调用 uni API，失败时返回空对象，避免平台差异导致中断。
+ */
 function tryCall(fn: (() => unknown) | undefined): Record<string, unknown> {
     try { return (fn?.() ?? {}) as Record<string, unknown>; } catch { return {}; }
 }
 
+/**
+ * 收集当前设备、窗口与宿主应用信息并归一化字段。
+ */
 function collect(): DeviceInfo {
     // @ts-ignore — 新 API 在旧版 @dcloudio/types 中可能未声明
     let deviceInfo = tryCall(uni.getDeviceInfo);
@@ -125,12 +131,18 @@ function collect(): DeviceInfo {
     };
 }
 
+/**
+ * 确保设备信息只在首次访问时采集一次。
+ */
 function ensure() {
     if (!_info.value) {
         _info.value = collect();
     }
 }
 
+/**
+ * 获取单例缓存的设备信息。
+ */
 export function useDevice() {
     ensure();
     return _info;

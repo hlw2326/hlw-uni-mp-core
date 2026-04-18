@@ -1,92 +1,58 @@
 /**
- * useAd — 小程序广告 Composable
+ * useAd - 小程序广告 composable
  *
- * 支持插屏广告（Interstitial）和激励视频广告（Rewarded Video）。
- * 底层使用 uni.createInterstitialAd / uni.createRewardedVideoAd，
- * 由 uni-app 框架自动适配微信、抖音等平台。
- *
- * 特性：
- *   - 同一 unitId 复用同一广告实例，不重复创建
- *   - 激励广告加载锁，防止并发 load 竞争
- *   - 精准移除事件监听（传入具体回调引用，不误删其他监听）
- *   - 调用 destroy() 统一释放所有实例（建议在 onUnload 中调用）
- *
- * @example
- * ```ts
- * const ad = useAd();
- *
- * onLoad(() => ad.preloadRewarded('adunit-yyy'));
- * onUnload(() => ad.destroy());
- *
- * // 插屏广告
- * await ad.showInterstitial('adunit-xxx');
- *
- * // 激励广告
- * const watched = await ad.showRewarded('adunit-yyy');
- * if (watched) giveReward();
- * ```
+ * 支持插屏广告和激励视频广告。
  */
 
-/* -------------------------------------------------------------------------- */
-/*  类型定义                                                                   */
-/* -------------------------------------------------------------------------- */
-
-/** 广告错误对象 */
+/** 广告错误对象。 */
 export interface AdError {
     errCode: number;
     errMsg: string;
 }
 
-/** 激励广告关闭回调参数 */
+/** 激励广告关闭回调参数。 */
 export interface RewardedCloseResult {
-    /** true = 用户完整观看，可发放奖励 */
+    /** true 表示用户完整观看，可发放奖励 */
     isEnded: boolean;
 }
 
-/** useAd 返回的公共接口 */
+/** useAd 返回的公共接口。 */
 export interface HlwAd {
     /**
-     * 展示插屏广告
-     * @param unitId 广告单元 ID
-     * @returns 是否成功触发展示
+     * 展示插屏广告。
      */
     showInterstitial(unitId: string): Promise<boolean>;
 
     /**
-     * 展示激励视频广告
-     * @param unitId 广告单元 ID
-     * @returns 用户是否完整观看（true = 可发奖励）
+     * 展示激励视频广告。
      */
     showRewarded(unitId: string): Promise<boolean>;
 
     /**
-     * 预加载激励广告（建议在 onLoad 时调用，减少用户等待）
-     * @param unitId 广告单元 ID
+     * 预加载激励视频广告。
      */
     preloadRewarded(unitId: string): void;
 
     /**
-     * 销毁所有缓存的广告实例（建议在 onUnload 中调用）
+     * 销毁所有缓存的广告实例。
      */
     destroy(): void;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  useAd                                                                     */
-/* -------------------------------------------------------------------------- */
-
+/**
+ * 广告能力封装，内部复用同一 unitId 的广告实例。
+ */
 export function useAd(): HlwAd {
-    /** 插屏广告实例缓存 */
+    /** 插屏广告实例缓存。 */
     const interstitialCache = new Map<string, any>();
-    /** 激励广告实例缓存 */
+    /** 激励广告实例缓存。 */
     const rewardedCache = new Map<string, any>();
-    /** 激励广告加载锁，避免并发重复 load */
+    /** 激励广告加载锁。 */
     const rewardedLoading = new Set<string>();
 
-    /* ---------------------------------------------------------------------- */
-    /*  插屏广告                                                               */
-    /* ---------------------------------------------------------------------- */
-
+    /**
+     * 获取或创建指定 unitId 的插屏广告实例。
+     */
     function getInterstitial(unitId: string): any {
         if (!interstitialCache.has(unitId)) {
             const ad = uni.createInterstitialAd({ adUnitId: unitId });
@@ -101,6 +67,9 @@ export function useAd(): HlwAd {
         return interstitialCache.get(unitId) ?? null;
     }
 
+    /**
+     * 展示插屏广告，失败时返回 false。
+     */
     function showInterstitial(unitId: string): Promise<boolean> {
         return new Promise((resolve) => {
             const ad = getInterstitial(unitId);
@@ -119,10 +88,9 @@ export function useAd(): HlwAd {
         });
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*  激励视频广告                                                            */
-    /* ---------------------------------------------------------------------- */
-
+    /**
+     * 获取或创建指定 unitId 的激励视频广告实例。
+     */
     function getRewarded(unitId: string): any {
         if (!rewardedCache.has(unitId)) {
             const ad = uni.createRewardedVideoAd({ adUnitId: unitId });
@@ -132,6 +100,9 @@ export function useAd(): HlwAd {
         return rewardedCache.get(unitId) ?? null;
     }
 
+    /**
+     * 预加载激励视频广告，减少展示时等待。
+     */
     function preloadRewarded(unitId: string): void {
         const ad = getRewarded(unitId);
         if (!ad || rewardedLoading.has(unitId)) return;
@@ -139,13 +110,16 @@ export function useAd(): HlwAd {
         rewardedLoading.add(unitId);
         ad.load()
             .catch(() => {
-                /* 预加载失败静默处理，show 时会再次尝试 */
+                // 预加载失败时静默处理，show 时会再次尝试。
             })
             .finally(() => {
                 rewardedLoading.delete(unitId);
             });
     }
 
+    /**
+     * 展示激励视频广告，并返回是否完整观看。
+     */
     function showRewarded(unitId: string): Promise<boolean> {
         return new Promise((resolve) => {
             const ad = getRewarded(unitId);
@@ -155,10 +129,12 @@ export function useAd(): HlwAd {
                 return;
             }
 
-            /* 持有回调引用，确保 offClose/offError 精准移除 */
             let closeHandler: ((res: RewardedCloseResult) => void) | null = null;
             let errorHandler: ((err: AdError) => void) | null = null;
 
+            /**
+             * 移除本次展示过程中注册的事件监听。
+             */
             function cleanup() {
                 if (closeHandler) {
                     ad.offClose?.(closeHandler);
@@ -184,6 +160,9 @@ export function useAd(): HlwAd {
             ad.onClose(closeHandler);
             ad.onError(errorHandler);
 
+            /**
+             * 真正执行广告展示逻辑。
+             */
             const doShow = () =>
                 ad.show().catch(() => {
                     cleanup();
@@ -191,13 +170,12 @@ export function useAd(): HlwAd {
                 });
 
             if (rewardedLoading.has(unitId)) {
-                /* 正在预加载中，等待本轮微任务后再 show */
                 Promise.resolve().then(doShow);
             } else {
                 rewardedLoading.add(unitId);
                 ad.load()
                     .then(doShow)
-                    .catch(doShow) /* load 失败仍尝试 show（可能有缓存） */
+                    .catch(doShow)
                     .finally(() => {
                         rewardedLoading.delete(unitId);
                     });
@@ -205,10 +183,9 @@ export function useAd(): HlwAd {
         });
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*  统一销毁                                                               */
-    /* ---------------------------------------------------------------------- */
-
+    /**
+     * 销毁全部广告实例并清空缓存。
+     */
     function destroy(): void {
         interstitialCache.forEach((ad) => ad?.destroy?.());
         interstitialCache.clear();
@@ -218,8 +195,6 @@ export function useAd(): HlwAd {
 
         rewardedLoading.clear();
     }
-
-    /* ---------------------------------------------------------------------- */
 
     return {
         showInterstitial,
