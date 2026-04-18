@@ -1,6 +1,6 @@
 {
     "name": "@hlw-uni/mp-core",
-    "version": "1.0.29",
+    "version": "1.0.30",
     "description": "UniApp 运行时核心包 — composables、Pinia stores、工具函数、UI 组件",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
