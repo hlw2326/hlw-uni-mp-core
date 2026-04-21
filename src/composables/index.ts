@@ -21,3 +21,4 @@ export {
 } from "./share";
 export { useUtils, type DownloadFileOptions, type DownloadFileResult, type TapEvent } from "./utils";
 export { useColor } from "./color";
+export { useRouter, type NavigateType, type NavigateOptions } from "./navigator";
