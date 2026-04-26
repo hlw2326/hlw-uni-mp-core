@@ -10,7 +10,19 @@ export { usePageMeta } from "./page-meta";
 export { useStorage, type StorageInstance } from "./storage";
 export { useValidate } from "./validate";
 export { useFormat } from "./format";
-export { useAd, type HlwAd, type AdError, type RewardedCloseResult } from "./ad";
+export {
+    useAd,
+    configAd,
+    destroyAds,
+    confirmReward,
+    type AdType,
+    type AdConfig,
+    type AdError,
+    type AdAdapter,
+    type AdCloseResult,
+    type AdClaimResult,
+    type AdClaimFn,
+} from "./ad";
 export {
     useShare,
     type ShareConfig,

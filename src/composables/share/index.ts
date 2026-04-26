@@ -1,9 +1,12 @@
 /**
  * useShare - 小程序分享 composable
  *
- * 支持分享给朋友与分享到朋友圈两种场景。
+ * 两层 API 并存：
+ *   - useShare(config)     —— SDK 层：直接注册 onShareAppMessage / onShareTimeline 钩子
+ *   - useShareConfig(...)  —— 业务层：lazy load 后端配置 + cache + fallback resolver
  */
 import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app';
+import { ref } from 'vue';
 
 export interface ShareAppMessageContent {
     /** 分享标题 */
